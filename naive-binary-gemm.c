@@ -77,6 +77,10 @@ void binary_gemm(int m, int n, int k, unsigned int *a, int lda, unsigned int *b,
 }
 
 int main(void){
+    struct timeval start,finish;
+    double duration;
+    srand((unsigned)time(NULL));
+
     int m, n, k;
     m = 3;
     n = 3;
@@ -94,6 +98,7 @@ int main(void){
 
     encoded_a = (unsigned int *) malloc(len_a/ENCODE_BIT * sizeof(unsigned int));
     encoded_b = (unsigned int *) malloc(len_b/ENCODE_BIT * sizeof(unsigned int));
+    encoded_c = (unsigned int *) malloc(len_c/ENCODE_BIT/ENCODE_BIT * sizeof(unsigned int));
 
     printf("A\n");
     print_matrix(a, len_a);
@@ -123,21 +128,38 @@ int main(void){
     print_matrix(encoded_a, len_a/ENCODE_BIT);
     print_matrix(encoded_b, len_b/ENCODE_BIT);
 
-    binary_gemm(m, n, k,
+    /* binary gemm */
+    gettimeofday(&start, NULL);
+    binary_gemm(m/ENCODE_BIT, n/ENCODE_BIT, k/ENCODE_BIT,
                 encoded_a, len_a/ENCODE_BIT,
                 encoded_b, len_b/ENCODE_BIT,
-                c, len_c);
+                encoded_c, len_c/ENCODE_BIT/ENCODE_BIT);
+    gettimeofday(&finish, NULL);
+    duration = ((double)(finish.tv_sec-start.tv_sec)*1000000 + 
+		(double)(finish.tv_usec-start.tv_usec)) / 1000000;
+    double gflops = 2.0 * m * n * k / ENCODE_BIT / ENCODE_BIT / ENCODE_BIT;
+    gflops = gflops/duration*1.0e-6;
+    printf("binary gemm \n %dx%dx%d\t%lf s\t%lf MFLOPS\n", m/ENCODE_BIT, n/ENCODE_BIT, k/ENCODE_BIT, duration, gflops);
 
     printf("binary_gemm result:\n");
     print_matrix(c, len_c);
 
-    printf("openblas result:\n");
+    /* cblas sgemm */
+    gettimeofday(&start, NULL);
     cblas_sgemm(CblasColMajor,
 		CblasNoTrans,
 		CblasTrans,
-		m,
-		n,
-		k, alpha, a, lda, b, ldb, beta, C, ldc);
+		m/ENCODE_BIT,
+		n/ENCODE_BIT,
+		k/ENCODE_BIT, alpha, a, lda, b, ldb, beta, C, ldc);
+    gettimeofday(&finish, NULL);
+    duration = ((double)(finish.tv_sec-start.tv_sec)*1000000 +
+                (double)(finish.tv_usec-start.tv_usec)) / 1000000;
+    gflops = gflops/duration*1.0e-6;
+    printf("cblas sgemm \n %dx%dx%d\t%lf s\t%lf MFLOPS\n", m/ENCODE_BIT, n/ENCODE_BIT, k/ENCODE_BIT, duration, gflops);
 
+    free(a);
+    free(b);
+    free(c);
     return 0;
 }
