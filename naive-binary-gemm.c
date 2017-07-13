@@ -3,11 +3,11 @@
 #include <time.h>
 #include "gemm_common.h"
 
-#define ENCONDE_BIT 32
+#define ENCODE_BIT 32
 
 void generate_matrix(unsigned int *mat, int mat_len);
 void ones_matrix(unsigned int *mat, int mat_len);
-void binary_gemm(int m, int n, int k, unsigned int *a, int lda, unsigned int *b, int ldb, int *c, int ldc);
+void binary_gemm(int m, int n, int k, unsigned int *a, int lda, unsigned int *b, int ldb, unsigned int *c, int ldc);
 void print_matrix(unsigned int *mat, int mat_len);
 
 void generate_matrix(unsigned int *mat, int mat_len) {
