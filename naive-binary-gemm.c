@@ -31,8 +31,7 @@ void ones_matrix(int *mat, int mat_len) {
 
 void random_matrix(int *mat, int mat_len) {
     for (int i = 0; i < mat_len; i++) {
-    	// TODO
-        mat[i] = 1;
+        mat[i] = rand()%2==1 ? 1: -1;
     }
 }
 
