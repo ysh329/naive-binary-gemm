@@ -35,6 +35,16 @@ void print_matrix(unsigned int *mat, int mat_len) {
     printf("\n");
 }
 
+void print_matrix(unsigned int *mat, int m, int n) {
+    for (int i = 0; i < m; i++) {
+    	for(int j = 0; j < n; j++) {
+    		printf("%d ", mat[j + i * n]);
+    	}
+        printf("\n");
+    }
+    printf("\n");
+}
+
 void encode_cols(unsigned int *columns, unsigned int *columns_binary, int m, int n) {
     // m: row number
     // n: col number, new col number
@@ -49,7 +59,7 @@ void encode_cols(unsigned int *columns, unsigned int *columns_binary, int m, int
             unsigned int sign;
 
             for (k = 0; k < 1; k++) {
-                sign = columns[j + n * (i32 + k)];
+                sign = columns[j + n * (i32 + k)] > 0;
                 rvalue |= (sign << k);
             }
             /* store 32bit-encoded elem in i-th row j-th col*/
@@ -90,13 +100,13 @@ int main(void){
 
     int m, n, k;
     m = 3;
-    n = 3;
-    k = 2;
+    n = 4;
+    k = 32;
 
     int len_a, len_b, len_c;
     len_a = m*k;
     len_b = k*n;
-    len_c = m*n/ENCODE_BIT/ENCODE_BIT;
+    len_c = m*n;
 
     unsigned int *a, *b, *c, *encoded_a, *encoded_b, *encoded_c;
     a = (unsigned int *) malloc(len_a * sizeof(unsigned int));
@@ -117,32 +127,32 @@ int main(void){
     itos(c, sc, len_c);
 
     printf("A\n");
-    print_matrix(a, len_a);
+    print_matrix(a, m, k);
     //generate_matrix(a, len_a);
     ones_matrix(a, len_a);
-    print_matrix(a, len_a);
+    print_matrix(a, m, k);
     printf("\n");
 
     printf("B\n");
-    print_matrix(b, len_b);
+    print_matrix(b, k, n);
     //generate_matrix(b, len_b);
     ones_matrix(b, len_b);
-    print_matrix(b, len_b);
+    print_matrix(b, k, n);
     printf("\n");
 
     printf("C\n");
-    print_matrix(c, len_c);
+    print_matrix(c, m, n);
     //generate_matrix(c, len_c);
     ones_matrix(c, len_c);
-    print_matrix(c, len_c);
+    print_matrix(c, m, n);
     printf("\n");
 
     /* encode a, b */
     encode_cols(a, encoded_a, m, k);
     encode_cols(b, encoded_b, k, n);
 
-    print_matrix(encoded_a, len_a/ENCODE_BIT);
-    print_matrix(encoded_b, len_b/ENCODE_BIT);
+    print_matrix(encoded_a, m, k/ENCODE_BIT);
+    print_matrix(encoded_b, k/ENCODE_BIT, n);
 
     /* binary gemm */
     gettimeofday(&start, NULL);
@@ -173,7 +183,7 @@ int main(void){
 		1, sa, m,
 		   sb, k,
 		2, sc, k);
-    print_matrix(c, len_c);
+    print_matrix(c, m, n);
 
     // speed benchmark
     printf("[cblas gemm]speed benchmark for encoded matrix\n");
