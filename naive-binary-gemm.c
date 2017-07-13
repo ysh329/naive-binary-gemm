@@ -13,6 +13,7 @@ void generate_matrix(unsigned int *mat, int mat_len);
 void ones_matrix(unsigned int *mat, int mat_len);
 void binary_gemm(int m, int n, int k, unsigned int *a, int lda, unsigned int *b, int ldb, unsigned int *c, int ldc);
 void print_matrix(unsigned int *mat, int mat_len);
+void itos(unsigned int *i_var, float *s_var, int len);
 
 void generate_matrix(unsigned int *mat, int mat_len) {
     srand( (unsigned) time(0) );
@@ -54,6 +55,12 @@ void encode_cols(unsigned int *columns, unsigned int *columns_binary, int m, int
             /* store 32bit-encoded elem in i-th row j-th col*/
             columns_binary[j + n * i] = rvalue;
         }
+    }
+}
+
+void itos(unsigned int *i_var, float *s_var, int len) {
+    for (int i = 0; i < len; i++) {
+	s_var[i] = i_var[i] * 1.0;
     }
 }
 
@@ -100,6 +107,15 @@ int main(void){
     encoded_b = (unsigned int *) malloc(len_b/ENCODE_BIT * sizeof(unsigned int));
     encoded_c = (unsigned int *) malloc(len_c/ENCODE_BIT/ENCODE_BIT * sizeof(unsigned int));
 
+    float *sa, *sb, *sc;
+    sa = (float *) malloc(len_a * sizeof(float));
+    sb = (float *) malloc(len_b * sizeof(float));
+    sc = (float *) malloc(len_c * sizeof(float));
+
+    itos(a, sa, len_a);
+    itos(b, sb, len_b);
+    itos(c, sc, len_c);
+
     printf("A\n");
     print_matrix(a, len_a);
     //generate_matrix(a, len_a);
@@ -145,14 +161,32 @@ int main(void){
     printf("binary_gemm result:\n");
     print_matrix(encoded_c, len_c/ENCODE_BIT/ENCODE_BIT);
 
-    /* cblas sgemm */
+    /***************
+     * cblas sgemm *
+     ***************/
+    // precision benchmark
+    printf("[cblas gemm]precision benchmark for un-encoded matrix\n");
+    cblas_sgemm(CblasColMajor,
+		CblasNoTrans,
+		CblasTrans,
+		m, n, k,
+		1, sa, m,
+		   sb, k,
+		2, sc, k);
+    print_matrix(c, len_c);
+
+    // speed benchmark
+    printf("[cblas gemm]speed benchmark for encoded matrix\n");
     gettimeofday(&start, NULL);
     cblas_sgemm(CblasColMajor,
 		CblasNoTrans,
 		CblasTrans,
 		m/ENCODE_BIT,
 		n/ENCODE_BIT,
-		k/ENCODE_BIT, alpha, encoded_a, m, encoded_b, k, beta, encoded_c, k);
+		k/ENCODE_BIT,
+		1, sa, m/ENCODE_BIT,
+		   sb, k/ENCODE_BIT,
+	        2, sc, k/ENCODE_BIT);
     gettimeofday(&finish, NULL);
     duration = ((double)(finish.tv_sec-start.tv_sec)*1000000 +
                 (double)(finish.tv_usec-start.tv_usec)) / 1000000;
@@ -160,8 +194,10 @@ int main(void){
     printf("cblas sgemm \n %dx%dx%d\t%lf s\t%lf MFLOPS\n", m/ENCODE_BIT, n/ENCODE_BIT, k/ENCODE_BIT, duration, gflops);
 
     // cblas sgemm result is meanless
-    free(a); free(encoded_a);
-    free(b); free(encoded_b);
-    free(c); free(encoded_c);
+
+    /* free */
+    free(a); free(sa); free(encoded_a);
+    free(b); free(sb); free(encoded_b);
+    free(c); free(sc); free(encoded_c);
     return 0;
 }
