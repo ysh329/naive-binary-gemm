@@ -1,6 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
+
 #include <time.h>
+#include <sys/time.h>
+
+#include <cblas.h>
 #include "gemm_common.h"
 
 #define ENCODE_BIT 32
@@ -74,14 +78,14 @@ void binary_gemm(int m, int n, int k, unsigned int *a, int lda, unsigned int *b,
 
 int main(void){
     int m, n, k;
-    m = 1;
-    n = 2;
-    k = 3;
+    m = 3;
+    n = 3;
+    k = 2;
 
     int len_a, len_b, len_c;
-    len_a = m*n;
-    len_b = n*k;
-    len_c = m*k/ENCODE_BIT/ENCODE_BIT;
+    len_a = m*k;
+    len_b = k*n;
+    len_c = m*n/ENCODE_BIT/ENCODE_BIT;
 
     unsigned int *a, *b, *c, *encoded_a, *encoded_b;
     a = (unsigned int *) malloc(len_a * sizeof(unsigned int));
@@ -113,11 +117,11 @@ int main(void){
     printf("\n");
 
     /* encode a, b */
-    encode_cols(a, encoded_a, m, n);
-    encode_cols(b, encoded_b, n, k);
+    encode_cols(a, encoded_a, m, k);
+    encode_cols(b, encoded_b, k, n);
 
-    print_matrix(encoded_a, m*n/ENCODE_BIT);
-    print_matrix(encoded_b, n*k/ENCODE_BIT);
+    print_matrix(encoded_a, len_a/ENCODE_BIT);
+    print_matrix(encoded_b, len_b/ENCODE_BIT);
 
     binary_gemm(m, n, k,
                 encoded_a, len_a/ENCODE_BIT,
@@ -126,6 +130,14 @@ int main(void){
 
     printf("binary_gemm result:\n");
     print_matrix(c, len_c);
+
+    printf("openblas result:\n");
+    cblas_sgemm(CblasColMajor,
+		CblasNoTrans,
+		CblasTrans,
+		m,
+		n,
+		k, alpha, a, lda, b, ldb, beta, C, ldc);
 
     return 0;
 }
