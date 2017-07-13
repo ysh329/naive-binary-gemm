@@ -141,6 +141,7 @@ int main(void){
     gflops = gflops/duration*1.0e-6;
     printf("binary gemm \n %dx%dx%d\t%lf s\t%lf MFLOPS\n", m/ENCODE_BIT, n/ENCODE_BIT, k/ENCODE_BIT, duration, gflops);
 
+    // binary gemm result
     printf("binary_gemm result:\n");
     print_matrix(encoded_c, len_c/ENCODE_BIT/ENCODE_BIT);
 
@@ -151,13 +152,14 @@ int main(void){
 		CblasTrans,
 		m/ENCODE_BIT,
 		n/ENCODE_BIT,
-		k/ENCODE_BIT, alpha, a, lda, b, ldb, beta, C, ldc);
+		k/ENCODE_BIT, alpha, encoded_a, m, encoded_b, ldb, beta, encoded_c, ldc);
     gettimeofday(&finish, NULL);
     duration = ((double)(finish.tv_sec-start.tv_sec)*1000000 +
                 (double)(finish.tv_usec-start.tv_usec)) / 1000000;
     gflops = gflops/duration*1.0e-6;
     printf("cblas sgemm \n %dx%dx%d\t%lf s\t%lf MFLOPS\n", m/ENCODE_BIT, n/ENCODE_BIT, k/ENCODE_BIT, duration, gflops);
 
+    // cblas sgemm result is meanless
     free(a); free(encoded_a);
     free(b); free(encoded_b);
     free(c); free(encoded_c);
