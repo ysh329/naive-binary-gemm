@@ -91,7 +91,7 @@ int main(void){
     len_b = k*n;
     len_c = m*n/ENCODE_BIT/ENCODE_BIT;
 
-    unsigned int *a, *b, *c, *encoded_a, *encoded_b;
+    unsigned int *a, *b, *c, *encoded_a, *encoded_b, *encoded_c;
     a = (unsigned int *) malloc(len_a * sizeof(unsigned int));
     b = (unsigned int *) malloc(len_b * sizeof(unsigned int));
     c = (unsigned int *) malloc(len_c * sizeof(unsigned int));
@@ -142,7 +142,7 @@ int main(void){
     printf("binary gemm \n %dx%dx%d\t%lf s\t%lf MFLOPS\n", m/ENCODE_BIT, n/ENCODE_BIT, k/ENCODE_BIT, duration, gflops);
 
     printf("binary_gemm result:\n");
-    print_matrix(c, len_c);
+    print_matrix(encoded_c, len_c/ENCODE_BIT/ENCODE_BIT);
 
     /* cblas sgemm */
     gettimeofday(&start, NULL);
@@ -158,8 +158,8 @@ int main(void){
     gflops = gflops/duration*1.0e-6;
     printf("cblas sgemm \n %dx%dx%d\t%lf s\t%lf MFLOPS\n", m/ENCODE_BIT, n/ENCODE_BIT, k/ENCODE_BIT, duration, gflops);
 
-    free(a);
-    free(b);
-    free(c);
+    free(a); free(encoded_a);
+    free(b); free(encoded_b);
+    free(c); free(encoded_c);
     return 0;
 }
