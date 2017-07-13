@@ -152,7 +152,7 @@ int main(void){
 		CblasTrans,
 		m/ENCODE_BIT,
 		n/ENCODE_BIT,
-		k/ENCODE_BIT, alpha, encoded_a, m, encoded_b, ldb, beta, encoded_c, ldc);
+		k/ENCODE_BIT, alpha, encoded_a, m, encoded_b, k, beta, encoded_c, k);
     gettimeofday(&finish, NULL);
     duration = ((double)(finish.tv_sec-start.tv_sec)*1000000 +
                 (double)(finish.tv_usec-start.tv_usec)) / 1000000;
