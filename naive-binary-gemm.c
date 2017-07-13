@@ -45,6 +45,16 @@ void print_matrix(unsigned int *mat, int m, int n) {
     printf("\n");
 }
 
+void print_matrix(float *mat, int m, int n) {
+    for (int i = 0; i < m; i++) {
+    	for(int j = 0; j < n; j++) {
+    		printf("%.0f ", mat[j + i * n]);
+    	}
+        printf("\n");
+    }
+    printf("\n");
+}
+
 void encode_cols(unsigned int *columns, unsigned int *columns_binary, int m, int n) {
     // m: row number
     // n: col number, new col number
@@ -108,46 +118,39 @@ int main(void){
     len_b = k*n;
     len_c = m*n;
 
-    unsigned int *a, *b, *c, *encoded_a, *encoded_b, *encoded_c;
+    unsigned int *a, *b, *c;
     a = (unsigned int *) malloc(len_a * sizeof(unsigned int));
     b = (unsigned int *) malloc(len_b * sizeof(unsigned int));
     c = (unsigned int *) malloc(len_c * sizeof(unsigned int));
 
-    encoded_a = (unsigned int *) malloc(len_a/ENCODE_BIT * sizeof(unsigned int));
-    encoded_b = (unsigned int *) malloc(len_b/ENCODE_BIT * sizeof(unsigned int));
-    encoded_c = (unsigned int *) malloc(len_c/ENCODE_BIT/ENCODE_BIT * sizeof(unsigned int));
-
-    float *sa, *sb, *sc;
-    sa = (float *) malloc(len_a * sizeof(float));
-    sb = (float *) malloc(len_b * sizeof(float));
-    sc = (float *) malloc(len_c * sizeof(float));
-
-    itos(a, sa, len_a);
-    itos(b, sb, len_b);
-    itos(c, sc, len_c);
 
     printf("A\n");
-    print_matrix(a, m, k);
+    // print_matrix(a, m, k);
     //generate_matrix(a, len_a);
     ones_matrix(a, len_a);
     print_matrix(a, m, k);
     printf("\n");
 
     printf("B\n");
-    print_matrix(b, k, n);
+    // print_matrix(b, k, n);
     //generate_matrix(b, len_b);
     ones_matrix(b, len_b);
     print_matrix(b, k, n);
     printf("\n");
 
     printf("C\n");
-    print_matrix(c, m, n);
+    // print_matrix(c, m, n);
     //generate_matrix(c, len_c);
     ones_matrix(c, len_c);
     print_matrix(c, m, n);
     printf("\n");
 
     /* encode a, b */
+    unsigned int *encoded_a, *encoded_b, *encoded_c;
+    encoded_a = (unsigned int *) malloc(len_a/ENCODE_BIT * sizeof(unsigned int));
+    encoded_b = (unsigned int *) malloc(len_b/ENCODE_BIT * sizeof(unsigned int));
+    encoded_c = (unsigned int *) malloc(len_c/ENCODE_BIT/ENCODE_BIT * sizeof(unsigned int));
+
     encode_cols(a, encoded_a, m, k);
     encode_cols(b, encoded_b, k, n);
 
@@ -174,6 +177,18 @@ int main(void){
     /***************
      * cblas sgemm *
      ***************/
+
+    float *sa, *sb, *sc;
+    sa = (float *) malloc(len_a * sizeof(float));
+    sb = (float *) malloc(len_b * sizeof(float));
+    sc = (float *) malloc(len_c * sizeof(float));
+
+    itos(a, sa, len_a);
+    itos(b, sb, len_b);
+
+    print_matrix(sa, m, k);
+    print_matrix(sb, k, n);
+
     // precision benchmark
     printf("[cblas gemm]precision benchmark for un-encoded matrix\n");
     cblas_sgemm(CblasColMajor,
@@ -181,9 +196,9 @@ int main(void){
 		CblasTrans,
 		m, n, k,
 		1, sa, m,
-		   sb, k,
-		2, sc, k);
-    print_matrix(c, m, n);
+		   sb, n,
+		0, sc, m);
+    print_matrix(sc, m, n);
 
     // speed benchmark
     printf("[cblas gemm]speed benchmark for encoded matrix\n");
@@ -191,11 +206,11 @@ int main(void){
     cblas_sgemm(CblasColMajor,
 		CblasNoTrans,
 		CblasTrans,
-		m/ENCODE_BIT,
-		n/ENCODE_BIT,
+		m,
+		n,
 		k/ENCODE_BIT,
-		1, sa, m/ENCODE_BIT,
-		   sb, k/ENCODE_BIT,
+		1, sa, m,
+		   sb, k,
 	        2, sc, k/ENCODE_BIT);
     gettimeofday(&finish, NULL);
     duration = ((double)(finish.tv_sec-start.tv_sec)*1000000 +
