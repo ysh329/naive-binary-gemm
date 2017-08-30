@@ -1,1 +1,1 @@
- g++ ./naive-binary-gemm.c -lopenblas
+ g++ -o naive-binary-gemm ./naive-binary-gemm.c -lopenblas
